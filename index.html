@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Training Game</title>
+    <style>
+        /* --- CSS เดิมของคุณทั้งหมด --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; overflow: hidden; }
+        .game-container { display: flex; flex-direction: column; height: 100vh; position: relative; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(0,0,0,0.3); height: 60px; }
+        .score-board { display: flex; gap: 30px; }
+        .score-item { text-align: center; }
+        .score-label { font-size: 12px; opacity: 0.8; }
+        .score-value { font-size: 24px; font-weight: bold; color: #00ff88; }
+        .crash-value { font-size: 24px; font-weight: bold; color: #ff4444; }
+        .timer { text-align: center; }
+        .timer-label { font-size: 12px; opacity: 0.8; }
+        .timer-value { font-size: 28px; font-weight: bold; color: #ff6b6b; }
+        .target-display { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); margin-left: 10px; }
+        .target-item { display: flex; align-items: center; }
+        canvas { background: #000; border: 2px solid #333; display: block; }
+        .settings-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); border-radius: 20px; padding: 30px; min-width: 400px; border: 2px solid rgba(255,255,255,0.1); z-index: 100; }
+        .settings-title { text-align: center; font-size: 24px; margin-bottom: 30px; color: #00ff88; }
+        .setting-group { margin-bottom: 25px; }
+        .setting-label { display: block; margin-bottom: 10px; font-size: 16px; }
+        .setting-control { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 16px; }
+        .setting-control option { background: #2a2a2a; color: white; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s; }
+        .btn-primary { background: #00ff88; color: black; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .buttons { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
+        .hidden { display: none !important; }
+        .result-summary { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.1); }
+        .summary-grid { display: grid; grid-template-columns: auto 1fr; gap: 15px 20px; font-size: 20px; align-items: center; }
+        .summary-grid span:first-child { font-weight: bold; color: rgba(255,255,255,0.7); text-align: right; }
+        .summary-grid span:nth-child(2) { font-weight: bold; font-size: 26px; color: #00ff88; text-align: left; }
+        .summary-grid span:nth-child(4) { font-weight: bold; font-size: 26px; color: #ff4444; text-align: left; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* SECURITY OVERLAY STYLE */
+        #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #00ff88; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: monospace; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <div id="security-overlay">
+        <div id="security-msg">🔒 Authenticating with Silp Pilot Database...</div>
+    </div>
+
+    <div id="loader-overlay" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 9999;">
+        <div style="border: 8px solid #555; border-top: 8px solid #00ccff; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite;"></div>
+    </div>
+    <div class="game-container">
+        <div class="header">
+            <div class="score-board">
+                <div class="score-item"><div class="score-label">Points</div><div class="score-value" id="points">0</div></div>
+                <div class="score-item"><div class="score-label">Crashes</div><div class="crash-value" id="crashes">0</div></div>
+                <div class="score-item target-item">
+                    <div class="score-label" style="font-size: 14px;">Target:</div>
+                    <div id="target-display" class="target-display" style="background-color: #00ff88;"></div>
+                </div>
+            </div>
+            <div class="timer"><div class="timer-label">Time Remaining</div><div class="timer-value" id="timer">5:00</div></div>
+            <button class="btn btn-secondary" onclick="showSettings()">Settings</button>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+    
+    <div class="settings-panel" id="settingsPanel">
+        <h2 class="settings-title">Game Settings</h2>
+        <div class="setting-group"><label class="setting-label">Number of Red Balls (1-5):</label><input type="range" class="setting-control" id="redBallCount" min="1" max="5" value="2"><span id="redBallCountValue">2</span> balls</div>
+        <div class="setting-group"><label class="setting-label">Red Ball Speed:</label><select class="setting-control" id="redBallSpeed"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option><option value="insane">Insane</option></select></div>
+        <div class="setting-group"><label class="setting-label">Game Time (minutes):</label><input type="range" class="setting-control" id="gameTime" min="3" max="10" value="5"><span id="gameTimeValue">5</span> minutes</div>
+        <div class="buttons">
+            <button class="btn btn-primary" onclick="startGame()">Start Game</button>
+            <button id="backToMainBtn" class="btn btn-secondary">Back to Main Page</button>
+        </div>
+    </div>
+
+    <div class="settings-panel hidden" id="gameOverPanel">
+        <h2 class="settings-title">Game Finished!</h2>
+        <div class="result-summary">
+            <div class="summary-grid">
+                <span>Points:</span><span id="finalPoints">0</span>
+                <span>Crashes:</span><span id="finalCrashes">0</span>
+            </div>
+        </div>
+        <div class="buttons">
+            <button class="btn btn-primary" id="playAgainBtn">Play Again</button>
+            <button id="backToMainBtn_GO" class="btn btn-secondary">Back to Main Page</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. ส่วนตั้งค่าความปลอดภัย (แก้ไขตรงนี้ทีหลัง)
+        // ==========================================
+        const GAS_SCRIPT_URL = "LINK_FROM_GAS_DEPLOYMENT"; // <--- เดี๋ยวเราจะเอาลิงก์ Web App มาใส่ตรงนี้ทีหลังครับ
+
+        // ==========================================
+        // 2. ส่วนตรวจสอบสิทธิ์ (ห้ามคนนอกเข้า)
+        // ==========================================
+        async function checkAccess() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const backUrl = urlParams.get('ref');
+
+            if (!token) {
+                denyAccess("Access Denied: No security token.<br>Please launch from Silp Pilot dashboard.");
+                return;
+            }
+
+            try {
+                // ตรวจสอบกับ GAS
+                const response = await fetch(`${GAS_SCRIPT_URL}?action=verify_external_token&token=${token}`);
+                const data = await response.json();
+
+                if (data.valid) {
+                    // ผ่าน
+                    document.getElementById('security-msg').innerHTML = `✅ Pilot Verified: ${data.email}<br>Initializing Systems...`;
+                    
+                    // จำลิงก์กลับบ้าน
+                    if(backUrl) document.body.dataset.homeUrl = backUrl;
+
+                    setTimeout(() => {
+                        document.getElementById('security-overlay').style.display = 'none';
+                    }, 1500);
+                } else {
+                    // ไม่ผ่าน
+                    denyAccess("Access Denied: Invalid or expired token.");
+                }
+            } catch (e) {
+                // กรณีลืมแก้ลิงก์ GAS หรือเน็ตหลุด
+                if (GAS_SCRIPT_URL === "LINK_FROM_GAS_DEPLOYMENT") {
+                     // ยอมให้เข้าเล่นได้ชั่วคราวระหว่างตั้งค่า (Dev Mode)
+                     console.warn("Dev Mode: Skipping auth");
+                     document.getElementById('security-overlay').style.display = 'none';
+                } else {
+                    denyAccess("Connection Error: Cannot contact server.");
+                }
+            }
+        }
+
+        function denyAccess(msg) {
+            const overlay = document.getElementById('security-overlay');
+            overlay.style.background = "#2a0000";
+            overlay.style.color = "#ff4444";
+            overlay.innerHTML = `<div style="text-align:center;"><h1>🚫 RESTRICTED AREA</h1><p>${msg}</p><br><a href="#" onclick="window.close()" style="color: white;">Close Window</a></div>`;
+        }
+
+        // ==========================================
+        // 3. ส่วนตัวเกม (แก้ไข Joystick ให้แล้ว)
+        // ==========================================
+        let canvas, ctx, gameRunning = false;
+        let player = { x: 400, y: 300, angle: 0, speed: 0, maxSpeed: 7.5, acceleration: 0.075, radius: 25 };
+        let stars = [], redBalls = [], targets = [], currentTargetColor = 'green';
+        let score = { points: 0, crashes: 0 }, crashCooldown = 0, keys = {};
+        let audioCtx = null;
+
+        function initAudio() { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }
+        function playSound(frequency, duration, type = 'sine') { 
+            if (!audioCtx) return;
+            try { if (audioCtx.state === 'suspended') audioCtx.resume(); const oscillator = audioCtx.createOscillator(), gainNode = audioCtx.createGain(); oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime); oscillator.type = type; gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration); oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + duration); } catch (e) { } 
+        }
+        function playCrashSound() { playSound(150, 0.5, 'sawtooth'); setTimeout(() => playSound(100, 0.3, 'square'), 100); if (navigator.vibrate) navigator.vibrate([100, 50, 100]); }
+        function playSuccessSound() { playSound(523, 0.2); setTimeout(() => playSound(659, 0.2), 100); setTimeout(() => playSound(784, 0.3), 200); }
+
+        function init() {
+            checkAccess(); // เรียกตรวจบัตรผ่าน
+
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            const header = document.querySelector('.header');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight - header.offsetHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+
+            createStars(400);
+            setupInputs();
+            initAudio();
+
+            document.getElementById('redBallCount').oninput = function () { document.getElementById('redBallCountValue').textContent = this.value; };
+            document.getElementById('gameTime').oninput = function () { document.getElementById('gameTimeValue').textContent = this.value; };
+            document.addEventListener('click', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
+
+            ['backToMainBtn', 'backToMainBtn_GO'].forEach(btnId => {
+                document.getElementById(btnId).addEventListener('click', function () {
+                    const mainPageUrl = document.body.dataset.homeUrl;
+                    if(mainPageUrl) window.top.location.href = mainPageUrl;
+                    else window.history.back();
+                });
+            });
+            document.getElementById('playAgainBtn').addEventListener('click', function () {
+                document.getElementById('gameOverPanel').classList.add('hidden');
+                showSettings();
+            });
+        }
+
+        function createStars(count) {
+            stars = [];
+            for (let i = 0; i < count; i++) {
+                stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, radius: Math.random() * 1.2, opacity: 0.5 + Math.random() * 0.5 });
+            }
+        }
+
+        function setupInputs() {
+            window.addEventListener('keydown', e => { switch (e.code) { case 'KeyW': case 'ArrowUp': keys.up = true; break; case 'KeyS': case 'ArrowDown': keys.down = true; break; case 'KeyA': case 'ArrowLeft': keys.left = true; break; case 'KeyD': case 'ArrowRight': keys.right = true; break; case 'Enter': case 'Space': keys.fire = true; break; } });
+            window.addEventListener('keyup', e => { switch (e.code) { case 'KeyW': case 'ArrowUp': keys.up = false; break; case 'KeyS': case 'ArrowDown': keys.down = false; break; case 'KeyA': case 'ArrowLeft': keys.left = false; break; case 'KeyD': case 'ArrowRight': keys.right = false; break; case 'Enter': case 'Space': keys.fire = false; break; } });
+        }
+
+        // *** ส่วนสำคัญ: ปรับจอยสติ๊กให้รองรับ Thrustmaster ***
+        function getCombinedInput() {
+            const input = { up: false, down: false, left: false, right: false, fire: false };
+            for (const key in keys) { if (keys[key]) input[key] = true; }
+            
+            const gamepad = navigator.getGamepads()[0];
+            if (gamepad) {
+                const deadzone = 0.15; // กันจอยลั่น
+                // แกน X (ซ้ายขวา)
+                if (gamepad.axes[0] < -deadzone) input.left = true;
+                if (gamepad.axes[0] > deadzone) input.right = true;
+                // แกน Y (ขึ้นลง) - Thrustmaster ใช้แกนนี้
+                if (gamepad.axes[1] < -deadzone) input.up = true;
+                if (gamepad.axes[1] > deadzone) input.down = true;
+                // ปุ่มยิง (รองรับปุ่ม 0 หรือ 1)
+                if ((gamepad.buttons[0] && gamepad.buttons[0].pressed) || (gamepad.buttons[1] && gamepad.buttons[1].pressed)) input.fire = true;
+            }
+            return input;
+        }
+
+        function showSettings() { document.getElementById('settingsPanel').classList.remove('hidden'); gameRunning = false; }
+
+        function startGame() {
+            document.getElementById('settingsPanel').classList.add('hidden');
+            const ballCount = parseInt(document.getElementById('redBallCount').value);
+            const ballSpeedSetting = document.getElementById('redBallSpeed').value;
+            const gameMinutes = parseInt(document.getElementById('gameTime').value);
+            
+            score = { points: 0, crashes: 0 };
+            crashCooldown = 0;
+            gameStartTime = Date.now();
+            gameTimeLimit = gameMinutes * 60 * 1000;
+            
+            player.x = canvas.width / 2; player.y = canvas.height / 2; player.speed = 0; player.angle = Math.random() * Math.PI * 2;
+            
+            redBalls = [];
+            targets = [ { color: 'green', colorHex: '#00ff88', x: 200, y: 200, radius: 20 }, { color: 'yellow', colorHex: '#ffff00', x: canvas.width - 200, y: 200, radius: 20 } ];
+
+            const speeds = { slow: 3.25, normal: 4.5, fast: 6.75, insane: 12.5 };
+            const baseSpeed = speeds[ballSpeedSetting];
+
+            for (let i = 0; i < ballCount; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                redBalls.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: Math.cos(angle) * baseSpeed, vy: Math.sin(angle) * baseSpeed, radius: 22.5 });
+            }
+            
+            generateTargetPositions();
+            setNewTargetColor();
+            gameRunning = true;
+            gameLoop();
+        }
+
+        function generateTargetPositions() {
+            targets.forEach(target => {
+                const margin = target.radius + 50;
+                target.x = margin + Math.random() * (canvas.width - margin * 2);
+                target.y = margin + Math.random() * (canvas.height - margin * 2);
+            });
+        }
+        function setNewTargetColor() {
+            currentTargetColor = Math.random() < 0.5 ? 'green' : 'yellow';
+            const targetDisplay = document.getElementById('target-display');
+            const targetData = targets.find(t => t.color === currentTargetColor);
+            if (targetDisplay && targetData) targetDisplay.style.backgroundColor = targetData.colorHex;
+        }
+
+        function update() {
+            if (!gameRunning) return;
+            updatePlayer();
+            updateRedBalls();
+            checkCollisions();
+            updateUI();
+        }
+
+        function updatePlayer() {
+            const input = getCombinedInput();
+            if (input.left) player.angle -= 0.04;
+            if (input.right) player.angle += 0.04;
+            if (input.up) player.speed = Math.min(player.speed + player.acceleration, player.maxSpeed);
+            if (input.down) player.speed = Math.max(player.speed - player.acceleration * 2, 0);
+
+            player.x += Math.cos(player.angle) * player.speed;
+            player.y += Math.sin(player.angle) * player.speed;
+
+            if (player.x > canvas.width + player.radius) player.x = -player.radius;
+            if (player.x < -player.radius) player.x = canvas.width + player.radius;
+            if (player.y > canvas.height + player.radius) player.y = -player.radius;
+            if (player.y < -player.radius) player.y = canvas.height + player.radius;
+
+            if (input.fire && crashCooldown <= 0) {
+                let targetHit = null;
+                for (const target of targets) {
+                    const dx = player.x - target.x; const dy = player.y - target.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < target.radius) { targetHit = target; break; }
+                }
+                if (targetHit) {
+                    if (targetHit.color === currentTargetColor) {
+                        score.points++; playSuccessSound(); generateTargetPositions(); setNewTargetColor();
+                    } else {
+                        score.crashes++; playCrashSound(); crashCooldown = 60;
+                    }
+                }
+            }
+            if (crashCooldown > 0) crashCooldown--;
+        }
+
+        function updateRedBalls() {
+            redBalls.forEach(ball => {
+                ball.x += ball.vx; ball.y += ball.vy;
+                if (ball.x <= ball.radius || ball.x >= canvas.width - ball.radius) { ball.vx *= -1; ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x)); }
+                if (ball.y <= ball.radius || ball.y >= canvas.height - ball.radius) { ball.vy *= -1; ball.y = Math.max(ball.radius, Math.min(canvas.height - ball.radius, ball.y)); }
+            });
+        }
+        function checkCollisions() {
+            if (crashCooldown > 0) return;
+            redBalls.forEach(ball => {
+                if (Math.sqrt((player.x - ball.x) ** 2 + (player.y - ball.y) ** 2) < player.radius + ball.radius) {
+                    score.crashes++; crashCooldown = 60; playCrashSound();
+                    player.x = canvas.width / 2; player.y = canvas.height / 2; player.speed = 0;
+                }
+            });
+        }
+        function updateUI() {
+            document.getElementById('points').textContent = score.points;
+            document.getElementById('crashes').textContent = score.crashes;
+            if (gameRunning) {
+                const remaining = Math.max(0, gameTimeLimit - (Date.now() - gameStartTime));
+                const minutes = Math.floor(remaining / 60000), seconds = Math.floor((remaining % 60000) / 1000);
+                document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                if (remaining <= 0) endGame();
+            }
+        }
+        function endGame() {
+            gameRunning = false;
+            document.getElementById('finalPoints').textContent = score.points;
+            document.getElementById('finalCrashes').textContent = score.crashes;
+            document.getElementById('gameOverPanel').classList.remove('hidden');
+        }
+
+        function render() {
+            ctx.fillStyle = '#000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(star => { ctx.beginPath(); ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`; ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2); ctx.fill(); });
+            targets.forEach(target => { ctx.beginPath(); ctx.fillStyle = target.colorHex; ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2); ctx.fill(); });
+            redBalls.forEach(ball => { ctx.beginPath(); ctx.fillStyle = '#ff4444'; ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fill(); });
+            ctx.save(); ctx.translate(player.x, player.y); ctx.rotate(player.angle);
+            ctx.beginPath(); ctx.strokeStyle = crashCooldown > 0 ? '#ff4444' : '#00ccff'; ctx.lineWidth = 3; ctx.arc(0, 0, player.radius, 0, Math.PI * 2); ctx.stroke();
+            ctx.restore();
+        }
+        function gameLoop() { if (gameRunning) { update(); render(); requestAnimationFrame(gameLoop); } }
+        window.addEventListener('load', init);
+        window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    </script>
+</body>
+</html>
