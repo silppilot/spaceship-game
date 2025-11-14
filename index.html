@@ -198,20 +198,33 @@
         }
 
         // *** ส่วนสำคัญ: ปรับจอยสติ๊กให้รองรับ Thrustmaster ***
+        // *** แก้ไข: รองรับ Analog Stick (โยกเบา/แรง) ***
         function getCombinedInput() {
-            const input = { up: false, down: false, left: false, right: false, fire: false };
-            for (const key in keys) { if (keys[key]) input[key] = true; }
+            // สร้างตัวแปร turnVal เพื่อเก็บค่าการหมุน (-1 คือซ้ายสุด, 0 คือตรงกลาง, 1 คือขวาสุด)
+            const input = { up: false, down: false, fire: false, turnVal: 0 };
+            
+            // 1. รับค่าจาก Keyboard (กดปุ่มจะได้ค่าเต็ม -1 หรือ 1)
+            if (keys.up) input.up = true;
+            if (keys.down) input.down = true;
+            if (keys.fire) input.fire = true;
+            if (keys.left) input.turnVal = -1;
+            if (keys.right) input.turnVal = 1;
 
+            // 2. รับค่าจาก Joystick
             const gamepad = navigator.getGamepads()[0];
             if (gamepad) {
-                const deadzone = 0.15; // กันจอยลั่น
-                // แกน X (ซ้ายขวา)
-                if (gamepad.axes[0] < -deadzone) input.left = true;
-                if (gamepad.axes[0] > deadzone) input.right = true;
-                // แกน Y (ขึ้นลง) - Thrustmaster ใช้แกนนี้
+                const deadzone = 0.05; // ระยะฟรีของจอย (กันจอยเดินเอง)
+
+                // แกน X (เลี้ยวซ้ายขวา) - อ่านค่าละเอียดแบบ Analog
+                if (Math.abs(gamepad.axes[0]) > deadzone) {
+                    input.turnVal = gamepad.axes[0]; 
+                }
+
+                // แกน Y (เร่ง/เบาเครื่อง)
                 if (gamepad.axes[1] < -deadzone) input.up = true;
                 if (gamepad.axes[1] > deadzone) input.down = true;
-                // ปุ่มยิง (รองรับปุ่ม 0 หรือ 1)
+
+                // ปุ่มยิง
                 if ((gamepad.buttons[0] && gamepad.buttons[0].pressed) || (gamepad.buttons[1] && gamepad.buttons[1].pressed)) input.fire = true;
             }
             return input;
@@ -273,30 +286,41 @@
 
         function updatePlayer() {
             const input = getCombinedInput();
-            if (input.left) player.angle -= 0.04;
-            if (input.right) player.angle += 0.04;
+
+            // --- ปรับความเร็วการเลี้ยวตรงนี้ ---
+            const turnSpeed = 0.07; // ค่าเดิมคือ 0.04 (ลองปรับเป็น 0.07 - 0.10 ถ้าอยากให้หมุนไวๆ)
+            
+            // คำนวณมุม: มุมปัจจุบัน + (ทิศทาง x ความเร็ว)
+            player.angle += input.turnVal * turnSpeed; 
+
+            // ส่วนเร่งความเร็ว/ลดความเร็ว (เหมือนเดิม)
             if (input.up) player.speed = Math.min(player.speed + player.acceleration, player.maxSpeed);
             if (input.down) player.speed = Math.max(player.speed - player.acceleration * 2, 0);
 
             player.x += Math.cos(player.angle) * player.speed;
             player.y += Math.sin(player.angle) * player.speed;
 
+            // ระบบทะลุขอบจอ (เหมือนเดิม)
             if (player.x > canvas.width + player.radius) player.x = -player.radius;
             if (player.x < -player.radius) player.x = canvas.width + player.radius;
             if (player.y > canvas.height + player.radius) player.y = -player.radius;
             if (player.y < -player.radius) player.y = canvas.height + player.radius;
 
+            // ระบบยิง (เหมือนเดิม)
             if (input.fire && crashCooldown <= 0) {
                 let targetHit = null;
                 for (const target of targets) {
-                    const dx = player.x - target.x; const dy = player.y - target.y;
+                    const dx = player.x - target.x;
+                    const dy = player.y - target.y;
                     if (Math.sqrt(dx * dx + dy * dy) < target.radius) { targetHit = target; break; }
                 }
                 if (targetHit) {
                     if (targetHit.color === currentTargetColor) {
-                        score.points++; playSuccessSound(); generateTargetPositions(); setNewTargetColor();
+                        score.points++;
+                        playSuccessSound(); generateTargetPositions(); setNewTargetColor();
                     } else {
-                        score.crashes++; playCrashSound(); crashCooldown = 60;
+                        score.crashes++;
+                        playCrashSound(); crashCooldown = 60;
                     }
                 }
             }
@@ -352,6 +376,7 @@
 </body>
 
 </html>
+
 
 
 
