@@ -72,6 +72,15 @@
             <input type="range" class="setting-control" id="joySens" min="1" max="5" value="3">
             <span id="joySensValue">Normal</span>
         </div>
+        <div class="setting-group">
+            <label class="setting-label">Red Ball Speed:</label>
+            <select class="setting-control" id="redBallSpeed">
+                <option value="slow">Slow</option>
+                <option value="normal" selected>Normal</option>
+                <option value="fast">Fast</option>
+                <option value="insane">Insane</option>
+            </select>
+        </div>
         <div class="setting-group"><label class="setting-label">Game Time (minutes):</label><input type="range" class="setting-control" id="gameTime" min="3" max="10" value="5"><span id="gameTimeValue">5</span> minutes</div>
         <div class="buttons">
             <button class="btn btn-primary" onclick="startGame()">Start Game</button>
@@ -387,6 +396,7 @@
 </body>
 
 </html>
+
 
 
 
