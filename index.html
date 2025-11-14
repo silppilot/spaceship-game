@@ -265,10 +265,16 @@
 
         function startGame() {
             document.getElementById('settingsPanel').classList.add('hidden');
-            // --- โค้ดใหม่: ตั้งค่าความไว ---
             const sensLevel = parseInt(document.getElementById('joySens').value);
-            const sensMap = { 1: 0.03, 2: 0.05, 3: 0.07, 4: 0.10, 5: 0.14 }; // กำหนดความเร็วแต่ละระดับ
-            playerTurnSpeed = sensMap[sensLevel]; 
+    
+            // 1. ความเร็วเลี้ยว (Turn Speed)
+            const sensMap = { 1: 0.03, 2: 0.05, 3: 0.07, 4: 0.10, 5: 0.14 };
+            playerTurnSpeed = sensMap[sensLevel];
+
+            // 2. อัตราเร่ง (Acceleration) - เพิ่มส่วนนี้ถ้าอยากให้สัมพันธ์กัน
+            // ค่าเดิมคือ 0.175 (อาจจะจับคู่กับ Level 3)
+            const accMap = { 1: 0.100, 2: 0.140, 3: 0.175, 4: 0.220, 5: 0.280 };
+            player.acceleration = accMap[sensLevel];
             // ---------------------------
             const ballCount = parseInt(document.getElementById('redBallCount').value);
             const ballSpeedSetting = document.getElementById('redBallSpeed').value;
@@ -409,6 +415,7 @@
 </body>
 
 </html>
+
 
 
 
