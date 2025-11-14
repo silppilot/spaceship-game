@@ -218,10 +218,9 @@
         // *** ส่วนสำคัญ: ปรับจอยสติ๊กให้รองรับ Thrustmaster ***
         // *** แก้ไข: รองรับ Analog Stick (โยกเบา/แรง) ***
         function getCombinedInput() {
-            // สร้างตัวแปร turnVal เพื่อเก็บค่าการหมุน (-1 คือซ้ายสุด, 0 คือตรงกลาง, 1 คือขวาสุด)
             const input = { up: false, down: false, fire: false, turnVal: 0 };
             
-            // 1. รับค่าจาก Keyboard (กดปุ่มจะได้ค่าเต็ม -1 หรือ 1)
+            // 1. รับค่าจาก Keyboard (เหมือนเดิม)
             if (keys.up) input.up = true;
             if (keys.down) input.down = true;
             if (keys.fire) input.fire = true;
@@ -231,18 +230,32 @@
             // 2. รับค่าจาก Joystick
             const gamepad = navigator.getGamepads()[0];
             if (gamepad) {
-                const deadzone = 0.05; // ระยะฟรีของจอย (กันจอยเดินเอง)
+                // --- ตั้งค่าโซนตาย (Deadzone) ใหม่ ---
+                const deadzoneTurn = 0.05;  // เลี้ยว: ไวเหมือนเดิม (แตะนิดเดียวเลี้ยว)
+                
+                const deadzoneAccel = 0.15; // เร่ง: ดันไปข้างหน้านิดหน่อยก็ถือว่าเร่งแล้ว (ช่วยตอนเลี้ยวสุดแล้วก้านจอยถูกบีบกลับมา)
+                
+                const deadzoneBrake = 0.60; // เบรก: **สำคัญมาก** ต้องดึงถอยหลังเกิน 60% ถึงจะเบรก (ถ้ามือเผลอกระตุกถอยหลังนิดหน่อยตอนเลี้ยว จะไม่เบรก)
 
-                // แกน X (เลี้ยวซ้ายขวา) - อ่านค่าละเอียดแบบ Analog
-                if (Math.abs(gamepad.axes[0]) > deadzone) {
+                // แกน X (เลี้ยวซ้ายขวา - Analog)
+                if (Math.abs(gamepad.axes[0]) > deadzoneTurn) {
                     input.turnVal = gamepad.axes[0]; 
                 }
 
-                // แกน Y (เร่ง/เบาเครื่อง)
-                if (gamepad.axes[1] < -deadzone) input.up = true;
-                if (gamepad.axes[1] > deadzone) input.down = true;
+                // แกน Y (เร่ง/เบรก)
+                // Thrustmaster: ดันหน้า = ค่าติดลบ (-), ดึงหลัง = ค่าบวก (+)
+                
+                // เช็คเร่ง (Forward): ถ้าดันไปข้างหน้าเกิน 15%
+                if (gamepad.axes[1] < -deadzoneAccel) {
+                    input.up = true;
+                }
+                
+                // เช็คเบรก (Backward): ถ้าดึงถอยหลังเกิน 60% เท่านั้น
+                if (gamepad.axes[1] > deadzoneBrake) {
+                    input.down = true;
+                }
 
-                // ปุ่มยิง
+                // ปุ่มยิง (Button 0 หรือ 1)
                 if ((gamepad.buttons[0] && gamepad.buttons[0].pressed) || (gamepad.buttons[1] && gamepad.buttons[1].pressed)) input.fire = true;
             }
             return input;
@@ -396,6 +409,7 @@
 </body>
 
 </html>
+
 
 
 
