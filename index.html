@@ -6,41 +6,234 @@
     <title>Flight Training Game</title>
     <style>
         /* --- CSS เดิมของคุณทั้งหมด --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; overflow: hidden; }
-        .game-container { display: flex; flex-direction: column; height: 100vh; position: relative; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(0,0,0,0.3); height: 60px; }
-        .score-board { display: flex; gap: 30px; }
-        .score-item { text-align: center; }
-        .score-label { font-size: 12px; opacity: 0.8; }
-        .score-value { font-size: 24px; font-weight: bold; color: #00ff88; }
-        .crash-value { font-size: 24px; font-weight: bold; color: #ff4444; }
-        .timer { text-align: center; }
-        .timer-label { font-size: 12px; opacity: 0.8; }
-        .timer-value { font-size: 28px; font-weight: bold; color: #ff6b6b; }
-        .target-display { width: 24px; height: 24px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.7); margin-left: 10px; }
-        .target-item { display: flex; align-items: center; }
-        canvas { background: #000; border: 2px solid #333; display: block; }
-        .settings-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.9); border-radius: 20px; padding: 30px; min-width: 400px; border: 2px solid rgba(255,255,255,0.1); z-index: 100; }
-        .settings-title { text-align: center; font-size: 24px; margin-bottom: 30px; color: #00ff88; }
-        .setting-group { margin-bottom: 25px; }
-        .setting-label { display: block; margin-bottom: 10px; font-size: 16px; }
-        .setting-control { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: white; font-size: 16px; }
-        .setting-control option { background: #2a2a2a; color: white; }
-        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.3s; }
-        .btn-primary { background: #00ff88; color: black; }
-        .btn-secondary { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); }
-        .buttons { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
-        .hidden { display: none !important; }
-        .result-summary { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 25px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.1); }
-        .summary-grid { display: grid; grid-template-columns: auto 1fr; gap: 15px 20px; font-size: 20px; align-items: center; }
-        .summary-grid span:first-child { font-weight: bold; color: rgba(255,255,255,0.7); text-align: right; }
-        .summary-grid span:nth-child(2) { font-weight: bold; font-size: 26px; color: #00ff88; text-align: left; }
-        .summary-grid span:nth-child(4) { font-weight: bold; font-size: 26px; color: #ff4444; text-align: left; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            overflow: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(0,0,0,0.3);
+            height: 60px;
+        }
+
+        .score-board {
+            display: flex;
+            gap: 30px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .score-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
+        }
+
+        .crash-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff4444;
+        }
+
+        .timer {
+            text-align: center;
+        }
+
+        .timer-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .timer-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .target-display {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.7);
+            margin-left: 10px;
+        }
+
+        .target-item {
+            display: flex;
+            align-items: center;
+        }
+
+        canvas {
+            background: #000;
+            border: 2px solid #333;
+            display: block;
+        }
+
+        .settings-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            border-radius: 20px;
+            padding: 30px;
+            min-width: 400px;
+            border: 2px solid rgba(255,255,255,0.1);
+            z-index: 100;
+        }
+
+        .settings-title {
+            text-align: center;
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #00ff88;
+        }
+
+        .setting-group {
+            margin-bottom: 25px;
+        }
+
+        .setting-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .setting-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+        }
+
+            .setting-control option {
+                background: #2a2a2a;
+                color: white;
+            }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #00ff88;
+            color: black;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .result-summary {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 15px 20px;
+            font-size: 20px;
+            align-items: center;
+        }
+
+            .summary-grid span:first-child {
+                font-weight: bold;
+                color: rgba(255,255,255,0.7);
+                text-align: right;
+            }
+
+            .summary-grid span:nth-child(2) {
+                font-weight: bold;
+                font-size: 26px;
+                color: #00ff88;
+                text-align: left;
+            }
+
+            .summary-grid span:nth-child(4) {
+                font-weight: bold;
+                font-size: 26px;
+                color: #ff4444;
+                text-align: left;
+            }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
         /* SECURITY OVERLAY STYLE */
-        #security-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; color: #00ff88; z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: monospace; font-size: 20px; }
+        #security-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #00ff88;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: monospace;
+            font-size: 20px;
+        }
     </style>
 </head>
 <body>
@@ -66,7 +259,7 @@
         </div>
         <canvas id="gameCanvas"></canvas>
     </div>
-    
+
     <div class="settings-panel" id="settingsPanel">
         <h2 class="settings-title">Game Settings</h2>
         <div class="setting-group"><label class="setting-label">Number of Red Balls (1-5):</label><input type="range" class="setting-control" id="redBallCount" min="1" max="5" value="2"><span id="redBallCountValue">2</span> balls</div>
@@ -96,49 +289,44 @@
         // ==========================================
         // 1. ส่วนตั้งค่าความปลอดภัย (แก้ไขตรงนี้ทีหลัง)
         // ==========================================
-        const GAS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwF1wcjIRFPyYcebDKYx6n5cyiFhofH5HNhiRC5FFtQCwTqFzM4JClPDBYjN1dMz5MK/exec"; // <--- เดี๋ยวเราจะเอาลิงก์ Web App มาใส่ตรงนี้ทีหลังครับ
+        const GAS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_aQXIHLBW6M5DCrQMsevK7_Y6oiWimhHBjWXeTQBsYPRY0qTuE35NcSP3XFKebiOp/exec"; // <--- เดี๋ยวเราจะเอาลิงก์ Web App มาใส่ตรงนี้ทีหลังครับ
 
         // ==========================================
-        // 2. ส่วนตรวจสอบสิทธิ์ (ห้ามคนนอกเข้า)
+        // 2. ส่วนตรวจสอบสิทธิ์ (แบบ Offline Check)
         // ==========================================
-        async function checkAccess() {
+        function checkAccess() {
             const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
+            const authToken = urlParams.get('auth'); // รับค่า auth แทน token
             const backUrl = urlParams.get('ref');
 
-            if (!token) {
-                denyAccess("Access Denied: No security token.<br>Please launch from Silp Pilot dashboard.");
+            // ตั้งค่าปุ่มย้อนกลับ
+            if (backUrl) document.body.dataset.homeUrl = backUrl;
+
+            if (!authToken) {
+                denyAccess("Access Denied: No ticket found.<br>Please launch from Silp Pilot dashboard.");
                 return;
             }
 
             try {
-                // ตรวจสอบกับ GAS
-                const response = await fetch(`${GAS_SCRIPT_URL}?action=verify_external_token&token=${token}`);
-                const data = await response.json();
+                // ถอดรหัสข้อมูลจากลิงก์ (Base64 Decode)
+                // แก้ไขตัวอักษรพิเศษเพื่อให้ถอดรหัสได้ถูกต้อง
+                const base64 = authToken.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonString = atob(base64);
+                const data = JSON.parse(jsonString);
 
-                if (data.valid) {
-                    // ผ่าน
-                    document.getElementById('security-msg').innerHTML = `✅ Pilot Verified: ${data.email}<br>Initializing Systems...`;
-                    
-                    // จำลิงก์กลับบ้าน
-                    if(backUrl) document.body.dataset.homeUrl = backUrl;
-
+                // ตรวจสอบเวลาหมดอายุ
+                if (Date.now() > data.exp) {
+                    denyAccess("Ticket Expired.<br>Please return to dashboard and launch again.");
+                } else {
+                    // ผ่านฉลุย!
+                    document.getElementById('security-msg').innerHTML = `✅ Pilot Verified: ${data.email}<br>Systems Ready.`;
                     setTimeout(() => {
                         document.getElementById('security-overlay').style.display = 'none';
                     }, 1500);
-                } else {
-                    // ไม่ผ่าน
-                    denyAccess("Access Denied: Invalid or expired token.");
                 }
             } catch (e) {
-                // กรณีลืมแก้ลิงก์ GAS หรือเน็ตหลุด
-                if (GAS_SCRIPT_URL === "LINK_FROM_GAS_DEPLOYMENT") {
-                     // ยอมให้เข้าเล่นได้ชั่วคราวระหว่างตั้งค่า (Dev Mode)
-                     console.warn("Dev Mode: Skipping auth");
-                     document.getElementById('security-overlay').style.display = 'none';
-                } else {
-                    denyAccess("Connection Error: Cannot contact server.");
-                }
+                console.error(e);
+                denyAccess("Invalid Ticket Data.<br>Access Denied.");
             }
         }
 
@@ -159,9 +347,9 @@
         let audioCtx = null;
 
         function initAudio() { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }
-        function playSound(frequency, duration, type = 'sine') { 
+        function playSound(frequency, duration, type = 'sine') {
             if (!audioCtx) return;
-            try { if (audioCtx.state === 'suspended') audioCtx.resume(); const oscillator = audioCtx.createOscillator(), gainNode = audioCtx.createGain(); oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime); oscillator.type = type; gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration); oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + duration); } catch (e) { } 
+            try { if (audioCtx.state === 'suspended') audioCtx.resume(); const oscillator = audioCtx.createOscillator(), gainNode = audioCtx.createGain(); oscillator.connect(gainNode); gainNode.connect(audioCtx.destination); oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime); oscillator.type = type; gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration); oscillator.start(audioCtx.currentTime); oscillator.stop(audioCtx.currentTime + duration); } catch (e) { }
         }
         function playCrashSound() { playSound(150, 0.5, 'sawtooth'); setTimeout(() => playSound(100, 0.3, 'square'), 100); if (navigator.vibrate) navigator.vibrate([100, 50, 100]); }
         function playSuccessSound() { playSound(523, 0.2); setTimeout(() => playSound(659, 0.2), 100); setTimeout(() => playSound(784, 0.3), 200); }
@@ -188,7 +376,7 @@
             ['backToMainBtn', 'backToMainBtn_GO'].forEach(btnId => {
                 document.getElementById(btnId).addEventListener('click', function () {
                     const mainPageUrl = document.body.dataset.homeUrl;
-                    if(mainPageUrl) window.top.location.href = mainPageUrl;
+                    if (mainPageUrl) window.top.location.href = mainPageUrl;
                     else window.history.back();
                 });
             });
@@ -214,7 +402,7 @@
         function getCombinedInput() {
             const input = { up: false, down: false, left: false, right: false, fire: false };
             for (const key in keys) { if (keys[key]) input[key] = true; }
-            
+
             const gamepad = navigator.getGamepads()[0];
             if (gamepad) {
                 const deadzone = 0.15; // กันจอยลั่น
@@ -237,16 +425,16 @@
             const ballCount = parseInt(document.getElementById('redBallCount').value);
             const ballSpeedSetting = document.getElementById('redBallSpeed').value;
             const gameMinutes = parseInt(document.getElementById('gameTime').value);
-            
+
             score = { points: 0, crashes: 0 };
             crashCooldown = 0;
             gameStartTime = Date.now();
             gameTimeLimit = gameMinutes * 60 * 1000;
-            
+
             player.x = canvas.width / 2; player.y = canvas.height / 2; player.speed = 0; player.angle = Math.random() * Math.PI * 2;
-            
+
             redBalls = [];
-            targets = [ { color: 'green', colorHex: '#00ff88', x: 200, y: 200, radius: 20 }, { color: 'yellow', colorHex: '#ffff00', x: canvas.width - 200, y: 200, radius: 20 } ];
+            targets = [{ color: 'green', colorHex: '#00ff88', x: 200, y: 200, radius: 20 }, { color: 'yellow', colorHex: '#ffff00', x: canvas.width - 200, y: 200, radius: 20 }];
 
             const speeds = { slow: 3.25, normal: 4.5, fast: 6.75, insane: 12.5 };
             const baseSpeed = speeds[ballSpeedSetting];
@@ -255,7 +443,7 @@
                 const angle = Math.random() * Math.PI * 2;
                 redBalls.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: Math.cos(angle) * baseSpeed, vy: Math.sin(angle) * baseSpeed, radius: 22.5 });
             }
-            
+
             generateTargetPositions();
             setNewTargetColor();
             gameRunning = true;
@@ -365,7 +553,6 @@
 </body>
 
 </html>
-
 
 
 
