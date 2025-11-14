@@ -67,7 +67,11 @@
     <div class="settings-panel" id="settingsPanel">
         <h2 class="settings-title">Game Settings</h2>
         <div class="setting-group"><label class="setting-label">Number of Red Balls (1-5):</label><input type="range" class="setting-control" id="redBallCount" min="1" max="5" value="2"><span id="redBallCountValue">2</span> balls</div>
-        <div class="setting-group"><label class="setting-label">Red Ball Speed:</label><select class="setting-control" id="redBallSpeed"><option value="slow">Slow</option><option value="normal" selected>Normal</option><option value="fast">Fast</option><option value="insane">Insane</option></select></div>
+        <div class="setting-group">
+            <label class="setting-label">Joystick Sensitivity (1-5):</label>
+            <input type="range" class="setting-control" id="joySens" min="1" max="5" value="3">
+            <span id="joySensValue">Normal</span>
+        </div>
         <div class="setting-group"><label class="setting-label">Game Time (minutes):</label><input type="range" class="setting-control" id="gameTime" min="3" max="10" value="5"><span id="gameTimeValue">5</span> minutes</div>
         <div class="buttons">
             <button class="btn btn-primary" onclick="startGame()">Start Game</button>
@@ -143,6 +147,7 @@
         let player = { x: 400, y: 300, angle: 0, speed: 0, maxSpeed: 7.5, acceleration: 0.075, radius: 25 };
         let stars = [], redBalls = [], targets = [], currentTargetColor = 'green';
         let score = { points: 0, crashes: 0 }, crashCooldown = 0, keys = {};
+        let playerTurnSpeed = 0.07; // ตัวแปรเก็บความไวปัจจุบัน
         let audioCtx = null;
 
         function initAudio() { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }
@@ -170,6 +175,10 @@
 
             document.getElementById('redBallCount').oninput = function () { document.getElementById('redBallCountValue').textContent = this.value; };
             document.getElementById('gameTime').oninput = function () { document.getElementById('gameTimeValue').textContent = this.value; };
+            const sensLabels = { 1: "Very Low", 2: "Low", 3: "Normal", 4: "High", 5: "Very High" };
+            document.getElementById('joySens').oninput = function() {
+                document.getElementById('joySensValue').textContent = sensLabels[this.value];
+            };
             document.addEventListener('click', () => { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); });
 
             ['backToMainBtn', 'backToMainBtn_GO'].forEach(btnId => {
@@ -234,6 +243,11 @@
 
         function startGame() {
             document.getElementById('settingsPanel').classList.add('hidden');
+            // --- โค้ดใหม่: ตั้งค่าความไว ---
+            const sensLevel = parseInt(document.getElementById('joySens').value);
+            const sensMap = { 1: 0.03, 2: 0.05, 3: 0.07, 4: 0.10, 5: 0.14 }; // กำหนดความเร็วแต่ละระดับ
+            playerTurnSpeed = sensMap[sensLevel]; 
+            // ---------------------------
             const ballCount = parseInt(document.getElementById('redBallCount').value);
             const ballSpeedSetting = document.getElementById('redBallSpeed').value;
             const gameMinutes = parseInt(document.getElementById('gameTime').value);
@@ -287,11 +301,8 @@
         function updatePlayer() {
             const input = getCombinedInput();
 
-            // --- ปรับความเร็วการเลี้ยวตรงนี้ ---
-            const turnSpeed = 0.07; // ค่าเดิมคือ 0.04 (ลองปรับเป็น 0.07 - 0.10 ถ้าอยากให้หมุนไวๆ)
-            
-            // คำนวณมุม: มุมปัจจุบัน + (ทิศทาง x ความเร็ว)
-            player.angle += input.turnVal * turnSpeed; 
+           // ใช้ค่า playerTurnSpeed ที่เราตั้งไว้ตอน startGame
+            player.angle += input.turnVal * playerTurnSpeed;
 
             // ส่วนเร่งความเร็ว/ลดความเร็ว (เหมือนเดิม)
             if (input.up) player.speed = Math.min(player.speed + player.acceleration, player.maxSpeed);
@@ -376,6 +387,7 @@
 </body>
 
 </html>
+
 
 
 
